@@ -1,0 +1,43 @@
+name: Unlock Next Lesson Content
+
+# This workflow is triggered by an external event sent to the repository.
+on:
+  repository_dispatch:
+    # This 'types' array must contain the event_type string you defined in your Google Apps Script.
+    types: [unlock-next-lesson]
+
+jobs:
+  unlock-the-file:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Check out the repository's code
+      # This action downloads the current state of your repo so the workflow can work with its files.
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Perform the unlock action
+      # This step runs shell commands to replace the locked file with the unlocked one.
+      - name: Replace Locked File with Unlocked Version
+        run: |
+          echo "Unlocking Lesson 2..."
+          # Copy the file from the hidden directory, overwriting the locked version in the root.
+          cp .unlocked-content/lesson-2.md lesson-2.md
+          echo "File replaced successfully."
+
+      # Step 3: Commit and push the changes
+      # This saves the changes back to your repository, making them live for all students.
+      - name: Commit and Push Changes
+        run: |
+          # Configure git with the details of the "committer"
+          git config --global user.name 'Course Bot'
+          git config --global user.email 'actions@github.com'
+
+          # Add the changed file to the staging area
+          git add lesson-2.md
+
+          # Commit the change with a descriptive message.
+          # We can access the student's email from the payload sent by the Apps Script.
+          git commit -m "Automated Unlock: Lesson 2 unlocked for ${{ github.event.client_payload.student_email }}"
+
+          # Push the commit to the main branch
+          git push
